@@ -1,0 +1,60 @@
+server:
+  port: 8080
+  tomcat:
+    # CSV grande: upload + leitura podem levar vários minutos sem enviar resposta.
+    connection-timeout: 1h
+    keep-alive-timeout: 1h
+
+spring:
+  mvc:
+    async:
+      request-timeout: 1h
+  application:
+    name: support-knowledge-api
+  datasource:
+    url: jdbc:postgresql://localhost:5432/support_knowledge
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  servlet:
+    multipart:
+      # Limite de upload do CSV (export do sistema de suporte pode passar de 100MB).
+      max-file-size: 300MB
+      max-request-size: 300MB
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+# Ajuste os nomes das colunas para bater EXATAMENTE com o cabeçalho do CSV exportado.
+app:
+  import:
+    chunk-batch-size: 500
+    csv:
+      # Use "COMMA" ou "SEMICOLON" conforme o export (Excel BR costuma ser SEMICOLON).
+      delimiter: "COMMA"
+      # Export do sistema de suporte costuma vir em Windows-1252 (Excel BR). Use UTF-8 se o arquivo for UTF-8.
+      charset: "WINDOWS-1252"
+      ticket-id-header: "Ref"
+      user-description-header: "Descrição"
+      public-log-header: "Log público"
+      private-log-header: "Log privado"
+      final-solution-header: "Solução"
+
+springdoc:
+  api-docs:
+    path: /api/v1/docs/openapi
+  swagger-ui:
+    path: /api/v1/docs/swagger-ui

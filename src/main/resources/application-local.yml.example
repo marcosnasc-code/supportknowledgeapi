@@ -1,0 +1,14 @@
+# =============================================================================
+# COMO USAR (IntelliJ)
+# 1. Copie este arquivo para: application-local.yml (mesma pasta)
+# 2. Troque COLOQUE_SUA_SENHA_AQUI pela senha do PostgreSQL
+# 3. Run/Debug Configurations -> Active profiles: local
+# 4. Rode SupportKnowledgeApplication
+#
+# O arquivo application-local.yml NÃO vai para o Git (está no .gitignore).
+# =============================================================================
+
+spring:
+  datasource:
+    username: postgres
+    password: COLOQUE_SUA_SENHA_AQUI
