@@ -40,6 +40,9 @@ management:
 
 # Ajuste os nomes das colunas para bater EXATAMENTE com o cabeçalho do CSV exportado.
 app:
+  search:
+    text-search-config: portuguese
+    snippet-max-length: 400
   import:
     chunk-batch-size: 500
     csv:
