@@ -4,6 +4,12 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@EnableConfigurationProperties({ImportCsvProperties.class, ImportProperties.class, SearchProperties.class})
+@EnableConfigurationProperties({
+        ImportCsvProperties.class,
+        ImportProperties.class,
+        SearchProperties.class,
+        OllamaProperties.class,
+        EmbeddingProperties.class
+})
 public class AppConfiguration {
 }

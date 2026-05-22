@@ -3,6 +3,7 @@ package com.mpsupport.knowledge.service;
 import com.mpsupport.knowledge.IntegrationTestBase;
 import com.mpsupport.knowledge.domain.ChunkSource;
 import com.mpsupport.knowledge.dto.SearchFilters;
+import com.mpsupport.knowledge.dto.SearchMode;
 import com.mpsupport.knowledge.dto.SearchRequest;
 import com.mpsupport.knowledge.dto.SearchResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,7 +48,8 @@ class SearchServiceTest extends IntegrationTestBase {
         SearchResponse response = searchService.search(new SearchRequest(
                 "anexar documento",
                 5,
-                null
+                null,
+                SearchMode.TEXT
         ));
 
         assertThat(response.totalMatches()).isGreaterThanOrEqualTo(1);
@@ -61,7 +63,8 @@ class SearchServiceTest extends IntegrationTestBase {
         SearchResponse response = searchService.search(new SearchRequest(
                 "cache navegador",
                 10,
-                new SearchFilters(List.of(ChunkSource.SOLUCAO))
+                new SearchFilters(List.of(ChunkSource.SOLUCAO)),
+                SearchMode.TEXT
         ));
 
         assertThat(response.results()).isNotEmpty();
@@ -74,7 +77,8 @@ class SearchServiceTest extends IntegrationTestBase {
         SearchResponse response = searchService.search(new SearchRequest(
                 "xyztermoquenaoexiste12345",
                 5,
-                null
+                null,
+                SearchMode.TEXT
         ));
 
         assertThat(response.totalMatches()).isZero();

@@ -1,0 +1,9 @@
+# Perfil para Postgres no Docker (docker compose up -d).
+# IntelliJ: Active profiles = local,docker
+# Ou só docker se colocar a senha aqui.
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/support_knowledge
+    username: postgres
+    password: postgres

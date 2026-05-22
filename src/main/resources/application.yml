@@ -1,20 +1,24 @@
 server:
   port: 8080
   tomcat:
-    # CSV grande: upload + leitura podem levar vários minutos sem enviar resposta.
-    connection-timeout: 1h
-    keep-alive-timeout: 1h
+    # Import CSV / indexação de milhares de embeddings: requisição HTTP pode levar horas.
+    connection-timeout: 12h
+    keep-alive-timeout: 12h
 
 spring:
+  config:
+    # Carrega .env na raiz do projeto (DB_PASSWORD=postgres, etc.)
+    import: optional:file:.env[.properties]
   mvc:
     async:
-      request-timeout: 1h
+      request-timeout: 12h
   application:
     name: support-knowledge-api
   datasource:
     url: jdbc:postgresql://localhost:5432/support_knowledge
     username: ${DB_USER:postgres}
-    password: ${DB_PASSWORD}
+    # Docker (compose): postgres. Postgres Windows antigo: defina DB_PASSWORD no .env.
+    password: ${DB_PASSWORD:postgres}
   jpa:
     hibernate:
       ddl-auto: validate
@@ -40,6 +44,19 @@ management:
 
 # Ajuste os nomes das colunas para bater EXATAMENTE com o cabeçalho do CSV exportado.
 app:
+  ollama:
+    base-url: http://localhost:11434
+    embedding-model: nomic-embed-text
+    connect-timeout-seconds: 60
+    # Timeout por chamada ao Ollama (cada lote de chunks). Indexar 1000+ pode levar muitos minutos por lote.
+    read-timeout-seconds: 7200
+  embedding:
+    dimension: 768
+    # Chunks por chamada ao Ollama (aumente com cautela em máquinas com pouca RAM).
+    batch-size: 32
+    # nomic-embed-text: ~8192 tokens; logs longos estouram contexto se enviar 6000+ caracteres.
+    max-content-chars: 1800
+    default-index-limit: 0
   search:
     text-search-config: portuguese
     snippet-max-length: 400

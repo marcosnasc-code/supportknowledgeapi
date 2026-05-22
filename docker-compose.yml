@@ -1,0 +1,25 @@
+# PostgreSQL com extensão pgvector (obrigatória para busca semântica).
+# Subir: docker compose up -d
+# Parar: docker compose down
+# Dados persistem no volume pgdata.
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: support-knowledge-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: support_knowledge
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d support_knowledge"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:

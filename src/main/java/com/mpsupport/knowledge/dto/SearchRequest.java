@@ -16,9 +16,15 @@ public record SearchRequest(
         Integer topK,
 
         @Valid
-        SearchFilters filters
+        SearchFilters filters,
+
+        SearchMode mode
 ) {
     public int resolvedTopK() {
         return topK != null ? topK : 8;
+    }
+
+    public SearchMode resolvedMode() {
+        return mode != null ? mode : SearchMode.TEXT;
     }
 }
