@@ -1,0 +1,128 @@
+# Catálogo de sistemas do MP — heurística por menção no texto (descrição, logs, evidências).
+# keywords e aliases podem ser ampliados conforme vocabulário real dos chamados.
+systems:
+  - id: ATENA
+    displayName: Atena
+    aliases: ["atena"]
+    keywords: ["atena"]
+    weight: 1.0
+
+  - id: INTEGRACAO_PROJUDI
+    displayName: Integração Projudi
+    aliases: ["integração projudi", "integracao projudi", "projudi"]
+    keywords: ["projudi", "integração projudi", "integracao projudi"]
+    weight: 1.0
+
+  - id: ARTEMIS
+    displayName: Artemis
+    aliases: ["artemis"]
+    keywords: ["artemis"]
+    weight: 1.0
+
+  - id: BENS_CONSUMO
+    displayName: Bens Consumo
+    aliases: ["bens consumo", "bens de consumo"]
+    keywords: ["bens consumo", "bens de consumo"]
+    weight: 1.0
+
+  - id: SISTEMA_CONTABILIDADE
+    displayName: Sistema de Contabilidade
+    aliases: ["sistema de contabilidade", "contabilidade"]
+    keywords: ["contabilidade", "sistema de contabilidade"]
+    weight: 1.0
+
+  - id: DEMETRA
+    displayName: Demetra
+    aliases: ["demetra"]
+    keywords: ["demetra"]
+    weight: 1.0
+
+  - id: DIARIAS
+    displayName: Diárias
+    aliases: ["diárias", "diarias"]
+    keywords: ["diárias", "diarias", "diaria"]
+    weight: 1.0
+
+  - id: GERENCIADOR_INTRANET
+    displayName: Gerenciador da Intranet
+    aliases: ["gerenciador da intranet", "gerenciador intranet", "intranet"]
+    keywords: ["gerenciador da intranet", "gerenciador intranet"]
+    weight: 1.0
+
+  - id: GERENCIADOR_PORTAL
+    displayName: Gerenciador do Portal
+    aliases: ["gerenciador do portal", "gerenciador portal"]
+    keywords: ["gerenciador do portal", "gerenciador portal"]
+    weight: 1.0
+
+  - id: GRIFO
+    displayName: Grifo
+    aliases: ["grifo"]
+    keywords: ["grifo"]
+    weight: 1.0
+
+  - id: HORUS
+    displayName: Horus
+    aliases: ["horus"]
+    keywords: ["horus"]
+    weight: 1.0
+
+  - id: MOVIMENTA_MP
+    displayName: Movimenta MP
+    aliases: ["movimenta mp", "movimenta"]
+    keywords: ["movimenta mp", "movimenta"]
+    weight: 1.0
+
+  - id: MPCLOUD
+    displayName: MPCloud
+    aliases: ["mpcloud", "mp cloud"]
+    keywords: ["mpcloud", "mp cloud"]
+    weight: 1.0
+
+  - id: SGRH
+    displayName: SGRH
+    aliases: ["sgrh"]
+    keywords: ["sgrh"]
+    weight: 1.0
+
+  - id: PORTAL_MPGO
+    displayName: Portal MPGO
+    aliases: ["portal mpgo", "mpgo"]
+    keywords: ["portal mpgo", "mpgo"]
+    weight: 1.0
+
+  - id: PORTAL_SERVIDOR
+    displayName: Portal do Servidor
+    aliases: ["portal do servidor", "portal servidor"]
+    keywords: ["portal do servidor", "portal servidor"]
+    weight: 1.0
+
+  - id: PORTAL_TRANSPARENCIA
+    displayName: Portal da Transparencia
+    aliases: ["portal da transparencia", "portal da transparência", "transparencia", "transparência"]
+    keywords: ["portal da transparencia", "portal da transparência", "transparencia"]
+    weight: 1.0
+
+  - id: GP
+    displayName: GP
+    aliases: ["gp"]
+    keywords: [" gp ", "sistema gp"]
+    weight: 0.8
+
+  - id: SISTEMA_TRANSPORTES
+    displayName: Sistema de Transportes
+    aliases: ["sistema de transportes", "transportes"]
+    keywords: ["sistema de transportes", "transportes"]
+    weight: 1.0
+
+  - id: SISTEMA_PROTOCOLO
+    displayName: Sistema de Protocolo
+    aliases: ["sistema de protocolo", "protocolo"]
+    keywords: ["sistema de protocolo", "protocolo eletronico", "protocolo eletrônico"]
+    weight: 1.0
+
+  - id: CLIO
+    displayName: Clio
+    aliases: ["clio"]
+    keywords: ["clio"]
+    weight: 1.0

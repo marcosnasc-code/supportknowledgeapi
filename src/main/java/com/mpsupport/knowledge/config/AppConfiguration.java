@@ -9,7 +9,9 @@ import org.springframework.context.annotation.Configuration;
         ImportProperties.class,
         SearchProperties.class,
         OllamaProperties.class,
-        EmbeddingProperties.class
+        EmbeddingProperties.class,
+        AssistProperties.class,
+        SystemHintsProperties.class
 })
 public class AppConfiguration {
 }

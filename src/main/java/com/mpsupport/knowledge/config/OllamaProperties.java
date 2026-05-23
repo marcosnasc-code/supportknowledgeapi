@@ -7,6 +7,7 @@ public class OllamaProperties {
 
     private String baseUrl = "http://localhost:11434";
     private String embeddingModel = "nomic-embed-text";
+    private String chatModel = "llama3.2:1b";
     private int connectTimeoutSeconds = 30;
     private int readTimeoutSeconds = 120;
 
@@ -24,6 +25,14 @@ public class OllamaProperties {
 
     public void setEmbeddingModel(String embeddingModel) {
         this.embeddingModel = embeddingModel;
+    }
+
+    public String getChatModel() {
+        return chatModel;
+    }
+
+    public void setChatModel(String chatModel) {
+        this.chatModel = chatModel;
     }
 
     public int getConnectTimeoutSeconds() {

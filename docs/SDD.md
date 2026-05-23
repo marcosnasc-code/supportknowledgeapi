@@ -380,8 +380,8 @@ flowchart TD
 
 | Método | Path | Descrição |
 |--------|------|-----------|
-| POST | `/search` | Busca híbrida |
-| POST | `/assist` | RAG + handoff + perguntas |
+| POST | `/search` | Busca híbrida | Implementado |
+| POST | `/assist` | RAG + handoff + perguntas | Implementado |
 
 #### POST `/search` — Request
 

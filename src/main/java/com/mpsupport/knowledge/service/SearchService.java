@@ -1,6 +1,8 @@
 package com.mpsupport.knowledge.service;
 
 import com.mpsupport.knowledge.config.SearchProperties;
+import com.mpsupport.knowledge.config.SystemHintsProperties;
+import com.mpsupport.knowledge.domain.SystemHintDefinition;
 import com.mpsupport.knowledge.domain.ChunkSource;
 import com.mpsupport.knowledge.dto.SearchCitation;
 import com.mpsupport.knowledge.dto.SearchFilters;
@@ -14,9 +16,11 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -28,17 +32,23 @@ public class SearchService {
     private final SearchProperties searchProperties;
     private final OllamaEmbeddingClient ollamaEmbeddingClient;
     private final EmbeddingIndexService embeddingIndexService;
+    private final SystemHintService systemHintService;
+    private final SystemHintsProperties systemHintsProperties;
 
     public SearchService(
             JdbcTemplate jdbcTemplate,
             SearchProperties searchProperties,
             OllamaEmbeddingClient ollamaEmbeddingClient,
-            EmbeddingIndexService embeddingIndexService
+            EmbeddingIndexService embeddingIndexService,
+            SystemHintService systemHintService,
+            SystemHintsProperties systemHintsProperties
     ) {
         this.jdbcTemplate = jdbcTemplate;
         this.searchProperties = searchProperties;
         this.ollamaEmbeddingClient = ollamaEmbeddingClient;
         this.embeddingIndexService = embeddingIndexService;
+        this.systemHintService = systemHintService;
+        this.systemHintsProperties = systemHintsProperties;
     }
 
     public SearchResponse search(SearchRequest request) {
@@ -65,7 +75,10 @@ public class SearchService {
         appendSourceFilter(request.filters(), where, params);
 
         long totalMatches = countMatches(where, params);
-        List<SearchResultItem> results = queryTextResults(where, params, topK);
+        List<SearchResultItem> results = applyDeclaredSystemBoost(
+                queryTextResults(where, params, topK),
+                request.filters()
+        );
 
         return new SearchResponse(queryText, topK, totalMatches, results);
     }
@@ -114,6 +127,7 @@ public class SearchService {
                 selectParams.toArray()
         );
 
+        results = applyDeclaredSystemBoost(results, request.filters());
         return new SearchResponse(queryText, topK, totalMatches, results);
     }
 
@@ -151,7 +165,42 @@ public class SearchService {
                 .toList();
 
         long totalMatches = Math.max(textResponse.totalMatches(), semanticResponse.totalMatches());
-        return new SearchResponse(request.query().strip(), request.resolvedTopK(), totalMatches, merged);
+        List<SearchResultItem> boosted = applyDeclaredSystemBoost(merged, request.filters());
+        return new SearchResponse(request.query().strip(), request.resolvedTopK(), totalMatches, boosted);
+    }
+
+    private List<SearchResultItem> applyDeclaredSystemBoost(
+            List<SearchResultItem> results,
+            SearchFilters filters
+    ) {
+        if (results.isEmpty() || filters == null || filters.sistemaDeclarado() == null
+                || filters.sistemaDeclarado().isBlank()) {
+            return results;
+        }
+
+        Optional<SystemHintDefinition> declared = systemHintService.resolveDeclared(filters.sistemaDeclarado());
+        if (declared.isEmpty()) {
+            return results;
+        }
+
+        double multiplier = systemHintsProperties.getDeclaredBoostMultiplier();
+        SystemHintDefinition system = declared.get();
+
+        return results.stream()
+                .map(item -> {
+                    if (systemHintService.textMentionsSystem(item.snippet(), system)) {
+                        return new SearchResultItem(
+                                item.score() * multiplier,
+                                item.ticketId(),
+                                item.source(),
+                                item.snippet(),
+                                item.citation()
+                        );
+                    }
+                    return item;
+                })
+                .sorted(Comparator.comparingDouble(SearchResultItem::score).reversed())
+                .toList();
     }
 
     private static SearchRequest widenRequestMode(SearchRequest request, SearchMode mode) {

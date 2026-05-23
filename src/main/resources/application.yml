@@ -47,6 +47,7 @@ app:
   ollama:
     base-url: http://localhost:11434
     embedding-model: nomic-embed-text
+    chat-model: llama3.2:1b
     connect-timeout-seconds: 60
     # Timeout por chamada ao Ollama (cada lote de chunks). Indexar 1000+ pode levar muitos minutos por lote.
     read-timeout-seconds: 7200
@@ -60,6 +61,16 @@ app:
   search:
     text-search-config: portuguese
     snippet-max-length: 400
+  system-hints:
+    resource: classpath:systems-hints.yml
+    min-confidence: 0.35
+    top-n: 3
+    declared-boost-multiplier: 1.5
+  assist:
+    default-top-k: 10
+    max-evidences-for-llm: 12
+    default-modo: CITADO_OBRIGATORIO_PARA_SOLUCOES
+    default-modo-busca: HYBRID
   import:
     chunk-batch-size: 500
     csv:

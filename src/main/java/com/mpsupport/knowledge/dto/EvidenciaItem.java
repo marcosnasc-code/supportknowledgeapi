@@ -1,0 +1,13 @@
+package com.mpsupport.knowledge.dto;
+
+import java.util.UUID;
+
+public record EvidenciaItem(
+        String referencia,
+        String ticketId,
+        String source,
+        String snippet,
+        UUID chunkId,
+        double scoreBusca
+) {
+}

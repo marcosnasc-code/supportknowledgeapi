@@ -63,7 +63,7 @@ class SearchServiceTest extends IntegrationTestBase {
         SearchResponse response = searchService.search(new SearchRequest(
                 "cache navegador",
                 10,
-                new SearchFilters(List.of(ChunkSource.SOLUCAO)),
+                new SearchFilters(List.of(ChunkSource.SOLUCAO), null),
                 SearchMode.TEXT
         ));
 
