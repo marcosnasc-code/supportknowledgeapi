@@ -9,7 +9,7 @@
 | **Data** | 16/05/2026 |
 | **Status** | MVP em elaboração |
 | **Stack** | Java 21, Spring Boot 3.3, Maven |
-| **Cliente principal** | Insomnia / OpenAPI (sem UI no MVP) |
+| **Cliente principal** | Insomnia / OpenAPI (sem UI no MVP) | 
 
 ---
 
