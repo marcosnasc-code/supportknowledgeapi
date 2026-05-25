@@ -20,6 +20,7 @@ import com.mpsupport.knowledge.dto.SearchRequest;
 import com.mpsupport.knowledge.dto.SearchResponse;
 import com.mpsupport.knowledge.dto.SearchResultItem;
 import com.mpsupport.knowledge.dto.SistemaSugeridoItem;
+import com.mpsupport.knowledge.dto.SolucaoEncontrada;
 import com.mpsupport.knowledge.integration.OllamaChatClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,7 +77,7 @@ public class AssistService {
         SearchMode modoBusca = request.resolvedModoBusca(assistProperties.getDefaultModoBusca());
         AssistMode modo = request.resolvedModo(assistProperties.getDefaultModo());
 
-        SearchFilters filters = new SearchFilters(null, request.casoAtual().sistemaDeclarado());
+        SearchFilters filters = new SearchFilters(null, request.casoAtual().sistemaDeclarado(), null);
         SearchResponse searchResponse = searchService.search(new SearchRequest(
                 query,
                 topK,
@@ -108,6 +109,21 @@ public class AssistService {
                     .collect(Collectors.toSet());
 
             List<String> perguntas = sanitizePerguntas(llmOutput.perguntasAoUsuario());
+            List<SolucaoEncontrada> solucoes = sanitizeSolucoes(
+                    llmOutput.solucoesEncontradas(),
+                    referenciasValidas
+            );
+            if (solucoes.isEmpty()) {
+                solucoes = deriveSolucoesFromEvidencias(evidenciasParaLlm);
+            }
+            String analiseDoCaso = sanitizeText(
+                    llmOutput.analiseDoCaso(),
+                    buildFallbackAnalise(evidencias, solucoes)
+            );
+            String proximaAcaoRecomendada = sanitizeText(
+                    llmOutput.proximaAcaoRecomendada(),
+                    buildFallbackProximaAcao(solucoes)
+            );
             List<HipotesesItem> hipoteses = sanitizeHipoteses(llmOutput.hipoteses(), modo, referenciasValidas);
             HandoffRascunho handoff = applySystemToHandoff(
                     sanitizeHandoff(llmOutput.rascunhoHandoff(), modo, referenciasValidas),
@@ -126,6 +142,9 @@ public class AssistService {
                     topK,
                     modo,
                     evidencias,
+                    solucoes,
+                    analiseDoCaso,
+                    proximaAcaoRecomendada,
                     hipoteses,
                     perguntas,
                     handoff,
@@ -171,6 +190,7 @@ public class AssistService {
                 sistemaDeclarado,
                 sistemasSugeridos
         );
+        List<SolucaoEncontrada> solucoes = deriveSolucoesFromEvidencias(evidencias);
 
         return buildResponse(
                 query,
@@ -178,6 +198,9 @@ public class AssistService {
                 topK,
                 modo,
                 evidencias,
+                solucoes,
+                buildFallbackAnalise(evidencias, solucoes),
+                buildFallbackProximaAcao(solucoes),
                 List.of(),
                 ensureSystemQuestion(PERGUNTAS_FALLBACK, sistemaSugerido),
                 handoff,
@@ -194,6 +217,9 @@ public class AssistService {
             int topK,
             AssistMode modo,
             List<EvidenciaItem> evidencias,
+            List<SolucaoEncontrada> solucoes,
+            String analiseDoCaso,
+            String proximaAcaoRecomendada,
             List<HipotesesItem> hipoteses,
             List<String> perguntas,
             HandoffRascunho handoff,
@@ -208,6 +234,9 @@ public class AssistService {
                 topK,
                 modo,
                 evidencias,
+                solucoes,
+                analiseDoCaso,
+                proximaAcaoRecomendada,
                 hipoteses,
                 perguntas,
                 handoff,
@@ -221,6 +250,9 @@ public class AssistService {
         StringBuilder sb = new StringBuilder(query);
         for (EvidenciaItem ev : evidencias) {
             sb.append(' ').append(ev.snippet());
+            if (ev.solucaoRelacionada() != null) {
+                sb.append(' ').append(ev.solucaoRelacionada().snippet());
+            }
         }
         return sb.toString();
     }
@@ -299,6 +331,7 @@ public class AssistService {
                     result.ticketId(),
                     result.source(),
                     result.snippet(),
+                    result.solution(),
                     result.citation().chunkId(),
                     result.score()
             ));
@@ -323,6 +356,101 @@ public class AssistService {
                 .map(String::strip)
                 .distinct()
                 .toList();
+    }
+
+    private static List<SolucaoEncontrada> sanitizeSolucoes(
+            List<AssistLlmSolucao> solucoes,
+            Set<String> referenciasValidas
+    ) {
+        if (solucoes == null) {
+            return List.of();
+        }
+
+        List<SolucaoEncontrada> sanitized = new ArrayList<>();
+        for (AssistLlmSolucao solucao : solucoes) {
+            if (solucao == null || solucao.resumo() == null || solucao.resumo().isBlank()) {
+                continue;
+            }
+            List<String> referencias = sanitizeReferencias(solucao.referencias(), referenciasValidas);
+            if (referencias.isEmpty()) {
+                continue;
+            }
+            sanitized.add(new SolucaoEncontrada(solucao.resumo().strip(), referencias));
+        }
+        return sanitized.stream()
+                .distinct()
+                .toList();
+    }
+
+    private static List<String> sanitizeReferencias(List<String> referencias, Set<String> referenciasValidas) {
+        if (referencias == null) {
+            return List.of();
+        }
+        return referencias.stream()
+                .map(ref -> validarReferencia(ref, referenciasValidas))
+                .filter(ref -> ref != null && !ref.isBlank())
+                .distinct()
+                .toList();
+    }
+
+    private static List<SolucaoEncontrada> deriveSolucoesFromEvidencias(List<EvidenciaItem> evidencias) {
+        List<SolucaoEncontrada> solucoes = new ArrayList<>();
+        for (EvidenciaItem evidencia : evidencias) {
+            if ("SOLUCAO".equals(evidencia.source())) {
+                addSolucaoIfPresent(solucoes, evidencia.snippet(), evidencia.referencia());
+            }
+            if (evidencia.solucaoRelacionada() != null) {
+                addSolucaoIfPresent(
+                        solucoes,
+                        evidencia.solucaoRelacionada().snippet(),
+                        evidencia.referencia()
+                );
+            }
+        }
+        return solucoes;
+    }
+
+    private static void addSolucaoIfPresent(
+            List<SolucaoEncontrada> solucoes,
+            String resumo,
+            String referencia
+    ) {
+        if (resumo == null || resumo.isBlank() || referencia == null || referencia.isBlank()) {
+            return;
+        }
+        String normalizedResumo = resumo.strip();
+        boolean alreadyAdded = solucoes.stream()
+                .anyMatch(item -> item.resumo().equalsIgnoreCase(normalizedResumo));
+        if (!alreadyAdded) {
+            solucoes.add(new SolucaoEncontrada(normalizedResumo, List.of(referencia)));
+        }
+    }
+
+    private static String sanitizeText(String value, String fallback) {
+        if (value == null || value.isBlank()) {
+            return fallback;
+        }
+        return value.strip();
+    }
+
+    private static String buildFallbackAnalise(
+            List<EvidenciaItem> evidencias,
+            List<SolucaoEncontrada> solucoes
+    ) {
+        if (evidencias.isEmpty()) {
+            return "Nenhuma evidência semelhante foi encontrada na base local para sustentar uma análise do caso.";
+        }
+        if (solucoes.isEmpty()) {
+            return "Foram encontradas evidências semelhantes, mas nenhuma solução citada apareceu nos trechos recuperados.";
+        }
+        return "Foram encontradas evidências semelhantes com solução citada no histórico. Use as soluções encontradas como primeira hipótese operacional, validando se o erro e o contexto do caso atual coincidem.";
+    }
+
+    private static String buildFallbackProximaAcao(List<SolucaoEncontrada> solucoes) {
+        if (solucoes.isEmpty()) {
+            return "Coletar print, passos para reprodução e sistema afetado antes de acionar desenvolvimento.";
+        }
+        return "Testar a primeira solução citada em solucoesEncontradas e confirmar com o usuário se o comportamento é o mesmo do histórico.";
     }
 
     private List<HipotesesItem> sanitizeHipoteses(

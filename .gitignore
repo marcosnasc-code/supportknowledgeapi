@@ -10,3 +10,5 @@ target/
 .vscode/
 src/main/resources/application-local.yml
 .env
+docs/FRONT-AJUSTES-LOVABLE.md
+docs/FRONT-BUSCA-DESCRICAO-SOLUCAO.md

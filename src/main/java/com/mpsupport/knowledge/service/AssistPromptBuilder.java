@@ -27,13 +27,21 @@ final class AssistPromptBuilder {
                 Regras obrigatórias:
                 - Use APENAS as evidências numeradas E1, E2, ... fornecidas pelo usuário.
                 - Nunca invente número de chamado (ticketId), soluções ou telas que não apareçam nas evidências.
+                - Quando uma evidência tiver fonte SOLUCAO ou bloco "Solução relacionada", extraia isso em solucoesEncontradas.
+                - analiseDoCaso deve explicar, em 2 a 5 frases, por que as evidências são parecidas ou insuficientes.
+                - proximaAcaoRecomendada deve ser uma ação objetiva para o atendente. Se houver solução citada, use-a como primeira tentativa.
                 - Se faltar informação (print, vídeo, passos, ambiente), liste em perguntasAoUsuario.
+                - perguntasAoUsuario: array JSON de STRINGS simples apenas. Exemplo correto: ["Pode enviar print?", "Qual navegador?"].
+                  PROIBIDO usar objetos dentro do array (errado: [{"pergunta":"..."}] ou [{"texto":"..."}]).
                 - rascunhoHandoff: quatro campos (sistema, local, erro, pedido). Cada campo: valor (string ou null), origem (CITACAO | INFERENCIA | NAO_IDENTIFICADO), referencia (Ex: "E1" ou null).
                 - %s
                 
-                Formato JSON esperado:
+                Formato JSON esperado (copie a estrutura; substitua os textos):
                 {
-                  "perguntasAoUsuario": ["..."],
+                  "perguntasAoUsuario": ["Pergunta 1?", "Pergunta 2?"],
+                  "solucoesEncontradas": [{"resumo": "Solução citada no histórico...", "referencias": ["E1"]}],
+                  "analiseDoCaso": "Análise curta baseada nas evidências.",
+                  "proximaAcaoRecomendada": "Primeira ação recomendada ao atendente.",
                   "hipoteses": [{"texto": "...", "referencia": "E1"}],
                   "rascunhoHandoff": {
                     "sistema": {"valor": null, "origem": "NAO_IDENTIFICADO", "referencia": null},
@@ -90,11 +98,21 @@ final class AssistPromptBuilder {
                         .append(" | score=").append(String.format("%.4f", ev.scoreBusca()))
                         .append("\n")
                         .append(ev.snippet())
-                        .append("\n\n");
+                        .append("\n");
+                if (ev.solucaoRelacionada() != null) {
+                    sb.append("Solução relacionada do mesmo chamado: ")
+                            .append(ev.solucaoRelacionada().snippet())
+                            .append("\n");
+                }
+                sb.append("\n");
             }
         }
 
-        sb.append("Monte perguntasAoUsuario, rascunhoHandoff e hipoteses conforme as regras do system prompt.");
+        sb.append("""
+                
+                Monte solucoesEncontradas, analiseDoCaso, proximaAcaoRecomendada, perguntasAoUsuario,
+                rascunhoHandoff e hipoteses conforme as regras do system prompt.
+                """);
         return sb.toString();
     }
 

@@ -22,6 +22,14 @@ Credenciais do container: usuário **`postgres`**, senha **`postgres`**.
 
 O Spring importa o arquivo `.env` da raiz (`spring.config.import` no `application.yml`).
 
+### Front Lovable / Vite: CORS bloqueado
+
+Se o console mostrar `blocked by CORS policy` ao chamar `localhost:8080` a partir de `*.lovable.app` ou `localhost:5173`:
+
+1. Reinicie a API após atualizar o projeto (há `WebCorsConfig` com origens permitidas).
+2. A API precisa estar rodando **na sua máquina** — o preview Lovable no navegador ainda usa **seu** `localhost:8080`.
+3. Preview publicado na nuvem **sem** API pública continua offline; use `npm run dev` local ou túnel (ngrok).
+
 ### Erro típico: "password authentication failed"
 
 | Causa | O que fazer |

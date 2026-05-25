@@ -12,6 +12,7 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.net.URI;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @RestControllerAdvice
@@ -30,6 +31,14 @@ public class ApiExceptionHandler {
 
     private String formatFieldError(FieldError error) {
         return error.getField() + ": " + error.getDefaultMessage();
+    }
+
+    @ExceptionHandler(NoSuchElementException.class)
+    public ResponseEntity<ProblemDetail> notFound(NoSuchElementException ex) {
+        ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+        pd.setTitle("Não encontrado");
+        pd.setType(URI.create("about:blank"));
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(pd);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

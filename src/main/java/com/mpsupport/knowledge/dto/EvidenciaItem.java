@@ -7,6 +7,7 @@ public record EvidenciaItem(
         String ticketId,
         String source,
         String snippet,
+        RelatedSolutionPreview solucaoRelacionada,
         UUID chunkId,
         double scoreBusca
 ) {

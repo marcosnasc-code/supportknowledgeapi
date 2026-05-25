@@ -11,7 +11,8 @@ import org.springframework.context.annotation.Configuration;
         OllamaProperties.class,
         EmbeddingProperties.class,
         AssistProperties.class,
-        SystemHintsProperties.class
+        SystemHintsProperties.class,
+        CorsProperties.class
 })
 public class AppConfiguration {
 }

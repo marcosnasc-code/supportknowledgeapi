@@ -6,6 +6,7 @@ import com.mpsupport.knowledge.dto.SearchFilters;
 import com.mpsupport.knowledge.dto.SearchMode;
 import com.mpsupport.knowledge.dto.SearchRequest;
 import com.mpsupport.knowledge.dto.SearchResponse;
+import com.mpsupport.knowledge.dto.SearchResultItem;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,13 +64,30 @@ class SearchServiceTest extends IntegrationTestBase {
         SearchResponse response = searchService.search(new SearchRequest(
                 "cache navegador",
                 10,
-                new SearchFilters(List.of(ChunkSource.SOLUCAO), null),
+                new SearchFilters(List.of(ChunkSource.SOLUCAO), null, null),
                 SearchMode.TEXT
         ));
 
         assertThat(response.results()).isNotEmpty();
         assertThat(response.results())
                 .allMatch(item -> item.source().equals(ChunkSource.SOLUCAO.name()));
+    }
+
+    @Test
+    void search_onDescricao_includesRelatedSolution() {
+        SearchResponse response = searchService.search(new SearchRequest(
+                "anexar documento",
+                5,
+                new SearchFilters(List.of(ChunkSource.DESCRICAO), null, true),
+                SearchMode.TEXT
+        ));
+
+        assertThat(response.results()).isNotEmpty();
+        SearchResultItem first = response.results().getFirst();
+        assertThat(first.source()).isEqualTo(ChunkSource.DESCRICAO.name());
+        assertThat(first.solution()).isNotNull();
+        assertThat(first.solution().snippet()).containsIgnoringCase("cache");
+        assertThat(first.solution().citation().source()).isEqualTo(ChunkSource.SOLUCAO);
     }
 
     @Test

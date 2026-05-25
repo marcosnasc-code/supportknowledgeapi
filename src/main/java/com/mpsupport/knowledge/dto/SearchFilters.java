@@ -13,6 +13,14 @@ public record SearchFilters(
         /**
          * Nome ou id do sistema informado pelo agente; usado para reordenar resultados (boost), sem ocultar outros.
          */
-        String sistemaDeclarado
+        String sistemaDeclarado,
+
+        /**
+         * Se true (padrão), anexa a solução do mesmo ticket quando o match não for em SOLUCAO.
+         */
+        Boolean includeSolution
 ) {
+    public boolean resolvedIncludeSolution() {
+        return includeSolution == null || includeSolution;
+    }
 }

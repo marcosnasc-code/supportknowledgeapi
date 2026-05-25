@@ -4,6 +4,7 @@ import com.mpsupport.knowledge.config.SearchProperties;
 import com.mpsupport.knowledge.config.SystemHintsProperties;
 import com.mpsupport.knowledge.domain.SystemHintDefinition;
 import com.mpsupport.knowledge.domain.ChunkSource;
+import com.mpsupport.knowledge.dto.RelatedSolutionPreview;
 import com.mpsupport.knowledge.dto.SearchCitation;
 import com.mpsupport.knowledge.dto.SearchFilters;
 import com.mpsupport.knowledge.dto.SearchMode;
@@ -17,11 +18,13 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class SearchService {
@@ -75,8 +78,11 @@ public class SearchService {
         appendSourceFilter(request.filters(), where, params);
 
         long totalMatches = countMatches(where, params);
-        List<SearchResultItem> results = applyDeclaredSystemBoost(
-                queryTextResults(where, params, topK),
+        List<SearchResultItem> results = enrichWithSolutions(
+                applyDeclaredSystemBoost(
+                        queryTextResults(where, params, topK),
+                        request.filters()
+                ),
                 request.filters()
         );
 
@@ -127,7 +133,10 @@ public class SearchService {
                 selectParams.toArray()
         );
 
-        results = applyDeclaredSystemBoost(results, request.filters());
+        results = enrichWithSolutions(
+                applyDeclaredSystemBoost(results, request.filters()),
+                request.filters()
+        );
         return new SearchResponse(queryText, topK, totalMatches, results);
     }
 
@@ -159,13 +168,17 @@ public class SearchService {
                             item.ticketId(),
                             item.source(),
                             item.snippet(),
-                            item.citation()
+                            item.citation(),
+                            item.solution()
                     );
                 })
                 .toList();
 
         long totalMatches = Math.max(textResponse.totalMatches(), semanticResponse.totalMatches());
-        List<SearchResultItem> boosted = applyDeclaredSystemBoost(merged, request.filters());
+        List<SearchResultItem> boosted = enrichWithSolutions(
+                applyDeclaredSystemBoost(merged, request.filters()),
+                request.filters()
+        );
         return new SearchResponse(request.query().strip(), request.resolvedTopK(), totalMatches, boosted);
     }
 
@@ -194,7 +207,8 @@ public class SearchService {
                                 item.ticketId(),
                                 item.source(),
                                 item.snippet(),
-                                item.citation()
+                                item.citation(),
+                                item.solution()
                         );
                     }
                     return item;
@@ -313,5 +327,75 @@ public class SearchService {
             return normalized;
         }
         return normalized.substring(0, max) + "...";
+    }
+
+    /**
+     * Para cada match (ex.: DESCRICAO), anexa trecho da SOLUCAO do mesmo ticket.
+     */
+    private List<SearchResultItem> enrichWithSolutions(List<SearchResultItem> results, SearchFilters filters) {
+        if (results.isEmpty() || filters == null || !filters.resolvedIncludeSolution()) {
+            return results;
+        }
+
+        List<String> ticketIds = results.stream()
+                .filter(item -> !ChunkSource.SOLUCAO.name().equals(item.source()))
+                .map(SearchResultItem::ticketId)
+                .distinct()
+                .toList();
+        if (ticketIds.isEmpty()) {
+            return results;
+        }
+
+        Map<String, SolutionRow> solutionsByTicket = loadSolutionsByTicket(ticketIds);
+
+        return results.stream()
+                .map(item -> attachSolution(item, solutionsByTicket.get(item.ticketId())))
+                .toList();
+    }
+
+    private Map<String, SolutionRow> loadSolutionsByTicket(List<String> ticketIds) {
+        String placeholders = ticketIds.stream().map(id -> "?").collect(Collectors.joining(", "));
+        String sql = """
+                SELECT id, ticket_id, content
+                FROM knowledge_chunk
+                WHERE source = 'SOLUCAO' AND ticket_id IN (%s)
+                """.formatted(placeholders);
+
+        List<SolutionRow> rows = jdbcTemplate.query(
+                sql,
+                (rs, rowNum) -> new SolutionRow(
+                        (UUID) rs.getObject("id"),
+                        rs.getString("ticket_id"),
+                        rs.getString("content")
+                ),
+                ticketIds.toArray()
+        );
+
+        Map<String, SolutionRow> map = new HashMap<>();
+        for (SolutionRow row : rows) {
+            map.putIfAbsent(row.ticketId(), row);
+        }
+        return map;
+    }
+
+    private SearchResultItem attachSolution(SearchResultItem item, SolutionRow solution) {
+        if (solution == null || ChunkSource.SOLUCAO.name().equals(item.source())) {
+            return item;
+        }
+        RelatedSolutionPreview preview = new RelatedSolutionPreview(
+                buildSnippet(solution.content()),
+                new SearchCitation(solution.id(), solution.ticketId(), ChunkSource.SOLUCAO)
+        );
+        return new SearchResultItem(
+                item.score(),
+                item.ticketId(),
+                item.source(),
+                item.snippet(),
+                item.citation(),
+                preview
+        );
+    }
+
+    private record SolutionRow(UUID id, String ticketId, String content) {
     }
 }

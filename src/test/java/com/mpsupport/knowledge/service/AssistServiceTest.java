@@ -55,6 +55,9 @@ class AssistServiceTest extends IntegrationTestBase {
         when(ollamaChatClient.chatJson(anyString(), anyString())).thenReturn("""
                 {
                   "perguntasAoUsuario": ["Pode enviar print da mensagem de erro?"],
+                  "solucoesEncontradas": [{"resumo": "Orientar limpeza de cache do navegador.", "referencias": ["E1"]}],
+                  "analiseDoCaso": "Há chamado semelhante sobre anexar documento na tela principal.",
+                  "proximaAcaoRecomendada": "Testar limpeza de cache antes de acionar desenvolvimento.",
                   "hipoteses": [],
                   "rascunhoHandoff": {
                     "sistema": {"valor": null, "origem": "NAO_IDENTIFICADO", "referencia": null},
@@ -80,6 +83,9 @@ class AssistServiceTest extends IntegrationTestBase {
         assertThat(response.evidencias()).isNotEmpty();
         assertThat(response.evidencias().getFirst().referencia()).isEqualTo("E1");
         assertThat(response.evidencias().getFirst().ticketId()).isEqualTo("100");
+        assertThat(response.solucoesEncontradas()).isNotEmpty();
+        assertThat(response.analiseDoCaso()).contains("chamado semelhante");
+        assertThat(response.proximaAcaoRecomendada()).contains("cache");
         assertThat(response.hipoteses()).isEmpty();
         assertThat(response.perguntasAoUsuario()).contains("Pode enviar print da mensagem de erro?");
         assertThat(response.rascunhoHandoff().local().origem()).isEqualTo(HandoffOrigem.CITACAO);
@@ -161,7 +167,7 @@ class AssistServiceTest extends IntegrationTestBase {
         AssistResponse response = assistService.assist(new AssistRequest(
                 new CasoAtualRequest(
                         "Erro ao anexar documento",
-                        "Usuário já limpou cache",
+                        null,
                         null
                 ),
                 5,
@@ -172,6 +178,9 @@ class AssistServiceTest extends IntegrationTestBase {
         assertThat(response.metadados().llmUsado()).isFalse();
         assertThat(response.metadados().aviso()).contains("LLM indisponível");
         assertThat(response.evidencias()).isNotEmpty();
+        assertThat(response.solucoesEncontradas()).isNotEmpty();
+        assertThat(response.analiseDoCaso()).isNotBlank();
+        assertThat(response.proximaAcaoRecomendada()).isNotBlank();
         assertThat(response.hipoteses()).isEmpty();
         assertThat(response.perguntasAoUsuario()).hasSizeGreaterThanOrEqualTo(4);
         assertThat(response.rascunhoHandoff().sistema().origem()).isEqualTo(HandoffOrigem.NAO_IDENTIFICADO);

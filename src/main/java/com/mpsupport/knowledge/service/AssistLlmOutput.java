@@ -7,9 +7,16 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 record AssistLlmOutput(
         List<String> perguntasAoUsuario,
+        List<AssistLlmSolucao> solucoesEncontradas,
+        String analiseDoCaso,
+        String proximaAcaoRecomendada,
         List<AssistLlmHipoteses> hipoteses,
         AssistLlmHandoff rascunhoHandoff
 ) {
+}
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+record AssistLlmSolucao(String resumo, List<String> referencias) {
 }
 
 @JsonIgnoreProperties(ignoreUnknown = true)

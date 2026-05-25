@@ -22,4 +22,23 @@ class AssistJsonParserTest {
 
         assertThat(output.perguntasAoUsuario()).containsExactly("a");
     }
+
+    @Test
+    void parse_coercesPerguntasFromObjects() {
+        String raw = """
+                {
+                  "perguntasAoUsuario": [
+                    {"pergunta": "Pode enviar print?"},
+                    {"texto": "Qual navegador?"}
+                  ],
+                  "hipoteses": [],
+                  "rascunhoHandoff": null
+                }
+                """;
+
+        AssistLlmOutput output = AssistJsonParser.parse(objectMapper, raw);
+
+        assertThat(output.perguntasAoUsuario())
+                .containsExactly("Pode enviar print?", "Qual navegador?");
+    }
 }

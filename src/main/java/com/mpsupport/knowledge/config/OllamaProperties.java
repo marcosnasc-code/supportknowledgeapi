@@ -7,7 +7,7 @@ public class OllamaProperties {
 
     private String baseUrl = "http://localhost:11434";
     private String embeddingModel = "nomic-embed-text";
-    private String chatModel = "llama3.2:1b";
+    private String chatModel = "qwen2.5:7b";
     private int connectTimeoutSeconds = 30;
     private int readTimeoutSeconds = 120;
 
